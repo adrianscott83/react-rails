@@ -40,8 +40,6 @@ module React
           }
         });
 
-        #{@@react_js.call};
-        React = global.React;
         #{@@components_js.call};
       CODE
     end
@@ -70,12 +68,13 @@ module React
       react_props = React::Renderer.react_props(args)
       jscode = <<-JS
         function() {
-          return React.renderComponentToString(#{component}(#{react_props}));
+          return React.renderToString(#{component}(#{react_props}));
         }()
       JS
       context.eval(jscode).html_safe
     rescue ExecJS::ProgramError => e
       raise PrerenderError.new(component, react_props, e)
     end
+
   end
 end
