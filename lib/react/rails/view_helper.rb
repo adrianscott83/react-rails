@@ -8,17 +8,23 @@ module React
       #
       def react_component(name, args = {}, options = {}, &block)
         options = {:tag => options} if options.is_a?(Symbol)
-        block = Proc.new{concat React::Renderer.render(name, args)} if options[:prerender] == true
+        block = Proc.new{concat React::Renderer.render(name, args, options[:static] == true)} if options[:prerender] == true
 
         html_options = options.reverse_merge(:data => {})
-        html_options[:data].tap do |data|
-          data[:react_class] = name
-          data[:react_props] = React::Renderer.react_props(args) unless args.empty?
+
+        # In the case that we're rendering statically, don't include the react
+        # html arguments to the rendered tag
+        if options[:prerender] == true && options[:static] != true
+          html_options[:data].tap do |data|
+            data[:react_class] = name
+            data[:react_props] = React::Renderer.react_props(args) unless args.empty?
+          end
         end
+
         html_tag = html_options[:tag] || :div
         
         # remove internally used properties so they aren't rendered to DOM
-        [:tag, :prerender].each{|prop| html_options.delete(prop)}
+        [:tag, :prerender, :static].each{|prop| html_options.delete(prop)}
         
         content_tag(html_tag, '', html_options, &block)
       end

@@ -21,9 +21,9 @@ module React
       @@pool = ConnectionPool.new(:size => args[:size]||10, :timeout => args[:timeout]||20) { self.new }
     end
 
-    def self.render(component, args={})
+    def self.render(component, args={}, static=false)
       @@pool.with do |renderer|
-        renderer.render(component, args)
+        renderer.render(component, args, static)
       end
     end
 
@@ -64,13 +64,21 @@ module React
       @context ||= ExecJS.compile(self.class.combined_js)
     end
 
-    def render(component, args={})
+    def render(component, args={}, static=false)
       react_props = React::Renderer.react_props(args)
-      jscode = <<-JS
-        function() {
-          return React.renderToString(#{component}(#{react_props}));
-        }()
-      JS
+      if static
+        jscode = <<-JS
+          function() {
+            return React.renderToStaticMarkup(#{component}(#{react_props}));
+          }()
+        JS
+      else
+        jscode = <<-JS
+          function() {
+            return React.renderToString(#{component}(#{react_props}));
+          }()
+        JS
+      end
       context.eval(jscode).html_safe
     rescue ExecJS::ProgramError => e
       raise PrerenderError.new(component, react_props, e)
