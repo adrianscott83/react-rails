@@ -14,7 +14,7 @@ module React
 
         # In the case that we're rendering statically, don't include the react
         # html arguments to the rendered tag
-        if options[:prerender] == true && options[:static] != true
+        if options[:prerender] != true || (options[:prerender] == true && options[:static] != true)
           html_options[:data].tap do |data|
             data[:react_class] = name
             data[:react_props] = React::Renderer.react_props(args) unless args.empty?
